@@ -21,7 +21,12 @@
 - Zookeeper 없이 단독 실행 가능
 
 # 5강 : Redpanda Console 웹 UI 추가
+- [커밋](https://github.com/jhs512/p-14107-4/commit/0005)
 - Redpanda Console 서비스 추가 (http://localhost:8090)
 - 내부/외부 네트워크 분리 (`internal://redpanda:9092`, `external://localhost:19092`)
 - Admin API 연동으로 클러스터 상태 확인 가능
 
+# 6강 : Kafka 의존성 추가
+- [커밋](https://github.com/jhs512/p-14107-4/commit/0006)
+- `spring-boot-starter-kafka` 의존성 추가
+- `spring-kafka-test` 테스트 의존성 추가
