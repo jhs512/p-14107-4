@@ -9,7 +9,8 @@ import org.springframework.context.annotation.Import;
 class BackApplicationTests {
 
     @Test
-    void contextLoads() {
+    void contextLoads() throws InterruptedException {
+        Thread.sleep(10000);
     }
 
 }
