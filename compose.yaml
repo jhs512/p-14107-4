@@ -1,12 +1,33 @@
 services:
-  redis:
-    image: redis:latest
-    ports:
-      - "6379:6379"
-  kafka:
+  redpanda:
     image: docker.redpanda.com/redpandadata/redpanda:latest
     command:
-      - redpanda start
-      - --mode dev-container
+      - redpanda
+      - start
+      - --mode
+      - dev-container
+      - --kafka-addr
+      - internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr
+      - internal://redpanda:9092,external://localhost:19092
     ports:
-      - "9092:9092"
+      - "19092:19092" # 호스트(스프링 앱)용
+      - "9644:9644"   # 콘솔/확인용(Admin API)
+
+  console:
+    image: docker.redpanda.com/redpandadata/console:latest
+    ports:
+      - "8090:8080"
+    entrypoint: /bin/sh
+    command: -c 'echo "$$CONSOLE_CONFIG_FILE" > /tmp/config.yml; /app/console'
+    environment:
+      CONFIG_FILEPATH: /tmp/config.yml
+      CONSOLE_CONFIG_FILE: |
+        kafka:
+          brokers: ["redpanda:9092"]        # 콘솔은 도커 내부용으로
+        redpanda:
+          adminApi:
+            enabled: true
+            urls: ["http://redpanda:9644"]  # 버전/헬스 표시용
+    depends_on:
+      - redpanda

@@ -20,3 +20,8 @@
 - `--mode dev-container`로 개발용 최소 설정
 - Zookeeper 없이 단독 실행 가능
 
+# 5강 : Redpanda Console 웹 UI 추가
+- Redpanda Console 서비스 추가 (http://localhost:8090)
+- 내부/외부 네트워크 분리 (`internal://redpanda:9092`, `external://localhost:19092`)
+- Admin API 연동으로 클러스터 상태 확인 가능
+
