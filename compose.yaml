@@ -3,3 +3,10 @@ services:
     image: redis:latest
     ports:
       - "6379:6379"
+  kafka:
+    image: docker.redpanda.com/redpandadata/redpanda:latest
+    command:
+      - redpanda start
+      - --mode dev-container
+    ports:
+      - "9092:9092"
