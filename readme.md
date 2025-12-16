@@ -30,3 +30,95 @@
 - [커밋](https://github.com/jhs512/p-14107-4/commit/0006)
 - `spring-boot-starter-kafka` 의존성 추가
 - `spring-kafka-test` 테스트 의존성 추가
+
+# 7강 : Embedded Kafka로 이벤트 발행/수신 테스트
+- `@EmbeddedKafka`로 테스트용 인메모리 Kafka 사용
+- `KafkaTemplate`으로 이벤트 발행
+- `@KafkaListener`로 이벤트 수신
+- `CountDownLatch`로 비동기 메시지 수신 대기
+
+## src/test/java/com/back/infra/kafka/TestEvent.java
+```java
+package com.back.infra.kafka;
+
+public record TestEvent(String message) {
+}
+```
+
+## src/test/java/com/back/infra/kafka/TestEventListener.java
+```java
+package com.back.infra.kafka;
+
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.stereotype.Component;
+
+import java.util.concurrent.CountDownLatch;
+
+@Component
+public class TestEventListener {
+
+    private final CountDownLatch latch = new CountDownLatch(1);
+    private TestEvent receivedEvent;
+
+    @KafkaListener(topics = "test-topic")
+    public void listen(TestEvent event) {
+        this.receivedEvent = event;
+        latch.countDown();
+    }
+
+    public CountDownLatch getLatch() {
+        return latch;
+    }
+
+    public TestEvent getReceivedEvent() {
+        return receivedEvent;
+    }
+}
+```
+
+## src/test/java/com/back/infra/kafka/KafkaTest.java
+```java
+package com.back.infra.kafka;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.test.context.EmbeddedKafka;
+
+import java.util.concurrent.TimeUnit;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@SpringBootTest
+@EmbeddedKafka(partitions = 1, topics = "test-topic")
+class KafkaTest {
+    @Autowired
+    private KafkaTemplate<String, TestEvent> kafkaTemplate;
+    @Autowired
+    private TestEventListener listener;
+
+    @Test
+    @DisplayName("이벤트 발행 및 수신 테스트")
+    void t001() throws InterruptedException {
+        TestEvent event = new TestEvent("hello kafka");
+
+        kafkaTemplate.send("test-topic", event);
+
+        boolean received = listener.getLatch().await(10, TimeUnit.SECONDS);
+
+        assertThat(received).isTrue();
+        assertThat(listener.getReceivedEvent().message()).isEqualTo("hello kafka");
+    }
+}
+```
+
+## src/test/resources/application.properties
+```properties
+spring.kafka.consumer.auto-offset-reset=earliest
+spring.kafka.consumer.group-id=test-group
+spring.kafka.producer.value-serializer=org.springframework.kafka.support.serializer.JsonSerializer
+spring.kafka.consumer.value-deserializer=org.springframework.kafka.support.serializer.JsonDeserializer
+spring.kafka.consumer.properties.spring.json.trusted.packages=com.back.infra.kafka
+```
